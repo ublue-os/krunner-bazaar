@@ -7,7 +7,9 @@ target_sources(bazaarrunner PRIVATE
 )
 
 target_link_libraries(bazaarrunner
-    Qt6::Gui # QAction
+    Qt6::Core
+    Qt6::Gui
+    Qt6::DBus
     KF6::Runner
     KF6::I18n
 )
