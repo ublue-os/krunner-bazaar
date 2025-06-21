@@ -1,0 +1,39 @@
+# Container ignore file for krunner-bazaar
+
+# Build artifacts
+build/
+build-debug/
+*.o
+*.so
+*.a
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Version control
+.git/
+.gitignore
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Vendor directory (not needed for container build)
+vendor/
+
+# Just and container files (not needed inside container)
+Justfile
+.containerignore
+
+# Other
+*.bak
+*.orig
+*.tmp

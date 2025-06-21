@@ -181,7 +181,6 @@ void BazaarRunner::match(KRunner::RunnerContext &context)
         if (isInstalled(app.id)) continue;
 
         KRunner::QueryMatch match(this);
-        match.setType(KRunner::QueryMatch::PossibleMatch);
         match.setIconName(app.iconName);
         match.setText(i18n("Install %1 via Bazaar", app.name));
         match.setSubtext(app.description);
