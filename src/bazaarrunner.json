@@ -1,0 +1,16 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "adam@fidel.cloud",
+                "Name": "Adam Fidel"
+            }
+        ],
+        "Description": "Bazaar runner",
+        "EnabledByDefault": true,
+        "Icon": "bazaar",
+        "License": "Apache-2.0",
+        "Name": "krunner-bazaar",
+        "Version": "0.1"
+    }
+}
