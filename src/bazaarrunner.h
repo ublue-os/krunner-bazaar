@@ -9,6 +9,7 @@
 #include <KRunner/AbstractRunner>
 #include <QDBusInterface>
 #include <QDBusReply>
+#include <memory>
 
 struct AppSuggestion {
     QString id;

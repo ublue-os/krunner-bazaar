@@ -19,53 +19,28 @@ BazaarRunner::BazaarRunner(QObject *parent, const KPluginMetaData &data)
     : KRunner::AbstractRunner(parent, data)
     , m_bazaarInterface(nullptr)
 {
-    // Disallow short queries (3 characters or less due to OBS)
-    setMinLetterCount(3);
+    // Disallow short queries (based on Bazaar's filtering logic)
+    // Bazaar filters out single character queries, we set minimum to 2
+    setMinLetterCount(2);
     
     // Initialize D-Bus interface to Bazaar
-    // Note: You may need to adjust the service name based on how Bazaar registers itself
-    // Common patterns: "org.domain.AppName", "com.domain.AppName", or "io.domain.AppName"
-    QString serviceName = QStringLiteral("org.gnome.Bazaar"); // Adjust this as needed
+    // Based on Bazaar's search provider configuration:
+    // BusName=io.github.kolunmi.bazaar
+    // ObjectPath=/io/github/kolunmi/bazaar/SearchProvider
+    QString serviceName = QStringLiteral("io.github.kolunmi.bazaar");
     
-    m_bazaarInterface = new QDBusInterface(
+    m_bazaarInterface = std::make_unique<QDBusInterface>(
         serviceName,
-        QStringLiteral("/org/gnome/Shell/SearchProvider2"),
+        QStringLiteral("/io/github/kolunmi/bazaar/SearchProvider"),
         QStringLiteral("org.gnome.Shell.SearchProvider2"),
-        QDBusConnection::sessionBus(),
-        this
+        QDBusConnection::sessionBus()
     );
     
     if (!m_bazaarInterface->isValid()) {
         qWarning() << "Failed to connect to Bazaar D-Bus interface:" << m_bazaarInterface->lastError().message();
-        qDebug() << "Trying alternative service names...";
-        
-        // Try alternative service names
-        QStringList alternativeNames = {
-            QStringLiteral("io.github.giantpinkrobots.flatsweep"), // Example pattern
-            QStringLiteral("com.github.giantpinkrobots.bazaar"),   // Another pattern
-            QStringLiteral("org.freedesktop.Bazaar"),              // FreeDesktop pattern
-            QStringLiteral("io.github.bazaar.Bazaar")              // GitHub pattern
-        };
-        
-        for (const QString &altName : alternativeNames) {
-            delete m_bazaarInterface;
-            m_bazaarInterface = new QDBusInterface(
-                altName,
-                QStringLiteral("/org/gnome/Shell/SearchProvider2"),
-                QStringLiteral("org.gnome.Shell.SearchProvider2"),
-                QDBusConnection::sessionBus(),
-                this
-            );
-            
-            if (m_bazaarInterface->isValid()) {
-                qDebug() << "Successfully connected to Bazaar using service name:" << altName;
-                break;
-            }
-        }
-        
-        if (!m_bazaarInterface->isValid()) {
-            qWarning() << "Could not connect to Bazaar D-Bus service. Make sure Bazaar is running.";
-        }
+        qWarning() << "Make sure Bazaar is running and the search provider is enabled.";
+    } else {
+        qDebug() << "Successfully connected to Bazaar D-Bus service:" << serviceName;
     }
     
     addSyntax(QStringLiteral(":q:"), i18n("Search for Flatpak applications in Bazaar"));
@@ -76,7 +51,7 @@ bool BazaarRunner::isInstalled(const QString &appId) {
     QProcess flatpakProcess;
     flatpakProcess.start(QStringLiteral("flatpak"), {QStringLiteral("--version")});
     if (!flatpakProcess.waitForFinished(3000) || flatpakProcess.exitCode() != 0) {
-        return false; // Flatpak not available
+        return false;
     }
     
     // Check if the specific app is installed
@@ -107,11 +82,23 @@ QList<AppSuggestion> BazaarRunner::queryBazaar(const QString &term) {
     QList<AppSuggestion> results;
     
     if (!m_bazaarInterface || !m_bazaarInterface->isValid()) {
+        qDebug() << "Bazaar D-Bus interface not available for query:" << term;
+        return results;
+    }
+    
+    // Based on Bazaar's start_request function, they filter out:
+    // - Single character queries
+    // - Very short queries (handled by our setMinLetterCount)
+    if (term.length() < 2) {
         return results;
     }
     
     // Call GetInitialResultSet method
+    // Bazaar expects an array of terms (split by spaces)
     QStringList terms = term.split(QLatin1Char(' '), Qt::SkipEmptyParts);
+    
+    qDebug() << "Querying Bazaar with terms:" << terms;
+    
     QDBusReply<QStringList> reply = m_bazaarInterface->call(QStringLiteral("GetInitialResultSet"), terms);
     
     if (!reply.isValid()) {
@@ -121,8 +108,11 @@ QList<AppSuggestion> BazaarRunner::queryBazaar(const QString &term) {
     
     QStringList resultIds = reply.value();
     if (resultIds.isEmpty()) {
+        qDebug() << "No results returned from Bazaar for query:" << term;
         return results;
     }
+    
+    qDebug() << "Bazaar returned" << resultIds.size() << "result IDs:" << resultIds;
     
     // Get metadata for the results
     QDBusReply<QList<QVariantMap>> metaReply = m_bazaarInterface->call(QStringLiteral("GetResultMetas"), resultIds);
@@ -133,6 +123,7 @@ QList<AppSuggestion> BazaarRunner::queryBazaar(const QString &term) {
     }
     
     QList<QVariantMap> metas = metaReply.value();
+    qDebug() << "Got metadata for" << metas.size() << "results";
     
     for (int i = 0; i < resultIds.size() && i < metas.size(); ++i) {
         const QVariantMap &meta = metas[i];
@@ -140,28 +131,25 @@ QList<AppSuggestion> BazaarRunner::queryBazaar(const QString &term) {
         AppSuggestion suggestion;
         suggestion.id = resultIds[i];
         
-        // Try different possible keys for name
+        // Based on Bazaar's get_result_metas implementation:
+        // - "id": the result ID
+        // - "name": the application name (from bz_entry_get_title)
+        // - "description": optional description (from bz_entry_get_description)
+        // - "gicon": icon as string (from g_icon_to_string)
+        // - "icon": serialized icon variant (fallback)
+        
         suggestion.name = meta.value(QStringLiteral("name")).toString();
-        if (suggestion.name.isEmpty()) {
-            suggestion.name = meta.value(QStringLiteral("title")).toString();
-        }
-        if (suggestion.name.isEmpty()) {
-            suggestion.name = meta.value(QStringLiteral("id")).toString();
-        }
-        
-        // Try different possible keys for description
         suggestion.description = meta.value(QStringLiteral("description")).toString();
-        if (suggestion.description.isEmpty()) {
-            suggestion.description = meta.value(QStringLiteral("subtitle")).toString();
-        }
         
-        // Try different possible keys for icon
-        suggestion.iconName = meta.value(QStringLiteral("icon")).toString();
+        // Try different icon keys in order of preference
+        suggestion.iconName = meta.value(QStringLiteral("gicon")).toString();
         if (suggestion.iconName.isEmpty()) {
-            suggestion.iconName = meta.value(QStringLiteral("icon-data")).toString();
-        }
-        if (suggestion.iconName.isEmpty()) {
-            suggestion.iconName = meta.value(QStringLiteral("gicon")).toString();
+            // Handle serialized icon variant
+            QVariant iconVariant = meta.value(QStringLiteral("icon"));
+            if (iconVariant.isValid()) {
+                // For now, use a fallback icon since handling serialized GIcon is complex
+                suggestion.iconName = QStringLiteral("application-x-flatpak");
+            }
         }
         
         // If no icon is provided, use a default Flatpak icon
@@ -171,9 +159,11 @@ QList<AppSuggestion> BazaarRunner::queryBazaar(const QString &term) {
         
         // Skip if we couldn't get a name
         if (suggestion.name.isEmpty()) {
+            qWarning() << "Skipping result with empty name:" << suggestion.id;
             continue;
         }
         
+        qDebug() << "Found app:" << suggestion.name << "ID:" << suggestion.id;
         results.append(suggestion);
     }
     
@@ -209,7 +199,11 @@ void BazaarRunner::run(const KRunner::RunnerContext &context, const KRunner::Que
         return;
     }
     
+    qDebug() << "Activating Bazaar result for app ID:" << appId;
+    
     // Activate the result in Bazaar, which should trigger the installation
+    // Based on Bazaar's activate_result function, it triggers the "search" action
+    // with the result ID, which opens Bazaar and navigates to that app
     if (m_bazaarInterface && m_bazaarInterface->isValid()) {
         QStringList terms = context.query().split(QLatin1Char(' '), Qt::SkipEmptyParts);
         uint timestamp = static_cast<uint>(QDateTime::currentSecsSinceEpoch());
@@ -224,8 +218,14 @@ void BazaarRunner::run(const KRunner::RunnerContext &context, const KRunner::Que
         if (!reply.isValid()) {
             qWarning() << "Failed to activate result in Bazaar:" << reply.error().message();
             
-            // Fallback: try to launch Bazaar with search terms
-            QProcess::startDetached(QStringLiteral("bazaar"), QStringList() << QStringLiteral("--search") << context.query());
+            // Fallback: try to launch Bazaar directly
+            // Use the flatpak run command if Bazaar is installed as Flatpak
+            if (!QProcess::startDetached(QStringLiteral("flatpak"), 
+                                       QStringList() << QStringLiteral("run") 
+                                                    << QStringLiteral("io.github.kolunmi.bazaar"))) {
+                // Final fallback: try system bazaar command
+                QProcess::startDetached(QStringLiteral("bazaar"), QStringList());
+            }
         } else {
             qDebug() << "Successfully activated result:" << appId << "in Bazaar";
         }
@@ -233,7 +233,11 @@ void BazaarRunner::run(const KRunner::RunnerContext &context, const KRunner::Que
         qWarning() << "Bazaar D-Bus interface not available";
         
         // Fallback: try to launch Bazaar directly
-        QProcess::startDetached(QStringLiteral("bazaar"), QStringList());
+        if (!QProcess::startDetached(QStringLiteral("flatpak"), 
+                                   QStringList() << QStringLiteral("run") 
+                                                << QStringLiteral("io.github.kolunmi.bazaar"))) {
+            QProcess::startDetached(QStringLiteral("bazaar"), QStringList());
+        }
     }
 }
 
