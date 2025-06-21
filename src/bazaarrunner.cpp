@@ -10,6 +10,9 @@
 #include <QDBusInterface>
 #include <QDBusReply>
 #include <QDBusVariant>
+#include <QDBusArgument>
+#include <QDBusMessage>
+#include <QDBusConnection>
 #include <QProcess>
 #include <QStandardPaths>
 #include <QDebug>
@@ -19,15 +22,23 @@ BazaarRunner::BazaarRunner(QObject *parent, const KPluginMetaData &data)
     : KRunner::AbstractRunner(parent, data)
     , m_bazaarInterface(nullptr)
 {
+    qDebug() << "BazaarRunner: Constructor called";
+    qDebug() << "BazaarRunner: Plugin name:" << data.name();
+    qDebug() << "BazaarRunner: Plugin ID:" << data.pluginId();
+    
     // Disallow short queries (based on Bazaar's filtering logic)
     // Bazaar filters out single character queries, we set minimum to 2
     setMinLetterCount(2);
+    
+    qDebug() << "BazaarRunner: Minimum letter count set to 2";
     
     // Initialize D-Bus interface to Bazaar
     // Based on Bazaar's search provider configuration:
     // BusName=io.github.kolunmi.bazaar
     // ObjectPath=/io/github/kolunmi/bazaar/SearchProvider
     QString serviceName = QStringLiteral("io.github.kolunmi.bazaar");
+    
+    qDebug() << "BazaarRunner: Attempting to connect to D-Bus service:" << serviceName;
     
     m_bazaarInterface = std::make_unique<QDBusInterface>(
         serviceName,
@@ -37,13 +48,14 @@ BazaarRunner::BazaarRunner(QObject *parent, const KPluginMetaData &data)
     );
     
     if (!m_bazaarInterface->isValid()) {
-        qWarning() << "Failed to connect to Bazaar D-Bus interface:" << m_bazaarInterface->lastError().message();
-        qWarning() << "Make sure Bazaar is running and the search provider is enabled.";
+        qWarning() << "BazaarRunner: Failed to connect to Bazaar D-Bus interface:" << m_bazaarInterface->lastError().message();
+        qWarning() << "BazaarRunner: Make sure Bazaar is running and the search provider is enabled.";
     } else {
-        qDebug() << "Successfully connected to Bazaar D-Bus service:" << serviceName;
+        qDebug() << "BazaarRunner: Successfully connected to Bazaar D-Bus service:" << serviceName;
     }
     
     addSyntax(QStringLiteral(":q:"), i18n("Search for Flatpak applications in Bazaar"));
+    qDebug() << "BazaarRunner: Constructor completed successfully";
 }
 
 bool BazaarRunner::isInstalled(const QString &appId) {
@@ -115,14 +127,94 @@ QList<AppSuggestion> BazaarRunner::queryBazaar(const QString &term) {
     qDebug() << "Bazaar returned" << resultIds.size() << "result IDs:" << resultIds;
     
     // Get metadata for the results
-    QDBusReply<QList<QVariantMap>> metaReply = m_bazaarInterface->call(QStringLiteral("GetResultMetas"), resultIds);
+    qDebug() << "Calling GetResultMetas with" << resultIds.size() << "result IDs";
     
-    if (!metaReply.isValid()) {
-        qWarning() << "Failed to get result metadata from Bazaar:" << metaReply.error().message();
+    QDBusMessage metaCall = QDBusMessage::createMethodCall(
+        QStringLiteral("io.github.kolunmi.bazaar"),
+        QStringLiteral("/io/github/kolunmi/bazaar/SearchProvider"),
+        QStringLiteral("org.gnome.Shell.SearchProvider2"),
+        QStringLiteral("GetResultMetas")
+    );
+    metaCall << resultIds;
+    
+    QDBusMessage metaReply = QDBusConnection::sessionBus().call(metaCall);
+    
+    if (metaReply.type() == QDBusMessage::ErrorMessage) {
+        qWarning() << "Failed to get result metadata from Bazaar:" << metaReply.errorMessage();
         return results;
     }
     
-    QList<QVariantMap> metas = metaReply.value();
+    qDebug() << "GetResultMetas call successful, parsing response...";
+    qDebug() << "Reply arguments count:" << metaReply.arguments().size();
+    
+    if (metaReply.arguments().isEmpty()) {
+        qWarning() << "No arguments in GetResultMetas reply";
+        return results;
+    }
+    
+    // Get the first argument which should be aa{sv}
+    QVariant metaVariant = metaReply.arguments().at(0);
+    qDebug() << "Metadata variant type:" << metaVariant.typeName();
+    
+    QList<QVariantMap> metas;
+    
+    if (metaVariant.canConvert<QDBusArgument>()) {
+        qDebug() << "Converting QDBusArgument to metadata list";
+        QDBusArgument metaArg = metaVariant.value<QDBusArgument>();
+        
+        // Handle aa{sv} signature - array of array of dictionaries
+        metaArg.beginArray();
+        while (!metaArg.atEnd()) {
+            qDebug() << "Processing outer array element...";
+            
+            // Each outer element is a{sv} - an array of dictionaries
+            // We need to begin the inner array directly on the same argument
+            metaArg.beginArray();
+            while (!metaArg.atEnd()) {
+                qDebug() << "Processing inner array element (dictionary)...";
+                QVariantMap meta;
+                
+                // Each inner element is {sv} - a dictionary of string to variant
+                metaArg.beginMap();
+                while (!metaArg.atEnd()) {
+                    metaArg.beginMapEntry();
+                    
+                    // Read the key (string)
+                    QString key;
+                    metaArg >> key;
+                    
+                    // Read the value (variant)
+                    QDBusVariant dbusVariant;
+                    metaArg >> dbusVariant;
+                    QVariant value = dbusVariant.variant();
+                    
+                    metaArg.endMapEntry();
+                    
+                    meta[key] = value;
+                    qDebug() << "    Key:" << key << "Value:" << value.toString() << "Type:" << value.typeName();
+                }
+                metaArg.endMap();
+                
+                metas.append(meta);
+                qDebug() << "  Added metadata map with" << meta.size() << "keys:" << meta.keys();
+            }
+            metaArg.endArray();
+        }
+        metaArg.endArray();
+    } else {
+        qWarning() << "Cannot convert metadata to QDBusArgument, variant type:" << metaVariant.typeName();
+        // Try direct conversion as fallback
+        if (metaVariant.canConvert<QVariantList>()) {
+            QVariantList metaList = metaVariant.toList();
+            qDebug() << "Trying direct conversion from QVariantList with" << metaList.size() << "items";
+            for (const QVariant &item : metaList) {
+                if (item.canConvert<QVariantMap>()) {
+                    metas.append(item.toMap());
+                }
+            }
+        }
+    }
+    
     qDebug() << "Got metadata for" << metas.size() << "results";
     
     for (int i = 0; i < resultIds.size() && i < metas.size(); ++i) {
@@ -173,32 +265,51 @@ QList<AppSuggestion> BazaarRunner::queryBazaar(const QString &term) {
 void BazaarRunner::match(KRunner::RunnerContext &context)
 {
     const QString term = context.query();
-    if (term.length() < 3) return;
+    qDebug() << "BazaarRunner::match called with query:" << term;
+    
+    if (term.length() < 2) {
+        qDebug() << "BazaarRunner::match: Query too short, minimum 2 characters required";
+        return;
+    }
 
+    qDebug() << "BazaarRunner::match: Querying Bazaar for:" << term;
     QList<AppSuggestion> results = queryBazaar(term);
+    qDebug() << "BazaarRunner::match: Got" << results.size() << "results from Bazaar";
 
+    int addedMatches = 0;
     for (const auto &app : results) {
-        if (isInstalled(app.id)) continue;
+        if (isInstalled(app.id)) {
+            qDebug() << "BazaarRunner::match: Skipping already installed app:" << app.name;
+            continue;
+        }
 
         KRunner::QueryMatch match(this);
+        //match.setType(KRunner::QueryMatch::PossibleMatch);
         match.setIconName(app.iconName);
         match.setText(i18n("Install %1 via Bazaar", app.name));
         match.setSubtext(app.description);
         match.setData(app.id);
         match.setRelevance(0.9);
         context.addMatch(match);
+        addedMatches++;
+        
+        qDebug() << "BazaarRunner::match: Added match for:" << app.name;
     }
+    
+    qDebug() << "BazaarRunner::match: Added" << addedMatches << "matches to context";
 }
 
 void BazaarRunner::run(const KRunner::RunnerContext &context, const KRunner::QueryMatch &match)
 {
+    qDebug() << "BazaarRunner::run called";
+    
     const QString appId = match.data().toString();
     if (appId.isEmpty()) {
-        qWarning() << "No app ID provided for installation";
+        qWarning() << "BazaarRunner::run: No app ID provided for installation";
         return;
     }
     
-    qDebug() << "Activating Bazaar result for app ID:" << appId;
+    qDebug() << "BazaarRunner::run: Activating Bazaar result for app ID:" << appId;
     
     // Activate the result in Bazaar, which should trigger the installation
     // Based on Bazaar's activate_result function, it triggers the "search" action
