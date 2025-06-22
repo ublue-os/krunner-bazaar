@@ -55,6 +55,9 @@ install: build
             mkdir -p /workspace/build/prefix
             make install DESTDIR=/workspace/build/prefix
         '
+    
+    sudo cp build/prefix/usr/lib64/qt6/plugins/kf6/krunner/bazaarrunner.so /usr/lib64/qt6/plugins/kf6/krunner/bazaarrunner.so
+
 
 # Debug bazaar-dbus-tool with GDB
 gdb:
