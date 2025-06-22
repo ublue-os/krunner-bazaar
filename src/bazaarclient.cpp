@@ -10,7 +10,68 @@
 
 using namespace Qt::Literals::StringLiterals;
 
+struct ResultMetas {
+    QList<QVariantMap> metas;
+};
+
+Q_DECLARE_METATYPE(ResultMetas)
+
+const QDBusArgument& operator>>(const QDBusArgument& arg, ResultMetas& metas)
+{
+    qDebug() << "=== Starting to parse with sig " << arg.currentSignature() << "===";
+    qDebug() << "Outer arg type:" << arg.currentType();
+    
+    arg.beginArray();  // Enter outer array
+    qDebug() << "Inner arg type:" << arg.currentType();
+
+    int elementIndex = 0;
+    while (!arg.atEnd()) {  // For each result metadata map
+        qDebug() << "Processing element" << elementIndex++ << "with type:" << arg.currentType();
+
+        // The actual structure is a{sv} (array of maps), not aa{sv}
+        // So each element in the outer array is directly a map
+        QVariantMap meta;
+        arg.beginMap();  // Enter the metadata dictionary
+        
+        int mapIndex = 0;
+        while (!arg.atEnd()) {  // For each key-value pair
+            qDebug() << "  Processing map element" << mapIndex++ << "with type:" << arg.currentType();
+
+            // Safety check before beginMapEntry
+            if (arg.currentType() != QDBusArgument::MapEntryType) {
+                qWarning() << "  Expected MapEntryType but got:" << arg.currentType();
+                break;
+            }
+
+            arg.beginMapEntry();
+
+            qDebug() << "    Extracting key";
+            QString key;
+            arg >> key;
+            
+            qDebug() << "    Extracting value";
+            QDBusVariant dbusVariant;
+            arg >> dbusVariant;
+            QVariant value = dbusVariant.variant();
+            
+            arg.endMapEntry();
+            
+            meta[key] = value;
+            qDebug() << "    Key:" << key << "Value:" << value.toString();
+        }
+        arg.endMap();  // Exit the metadata dictionary
+        
+        metas.metas.append(meta);
+        qDebug() << "  Added metadata map with" << meta.size() << "entries";
+    }
+    arg.endArray();  // Exit outer array
+    
+    qDebug() << "=== Finished parsing, got" << metas.metas.size() << "metadata objects ===";
+    return arg;
+}
+
 BazaarClient::BazaarClient() {
+    //qDBusRegisterMetaType<ResultMetas>();
     qDebug() << "BazaarClient: Initializing connection to Bazaar";
     
     // Initialize D-Bus interface to Bazaar
@@ -167,7 +228,7 @@ QStringList BazaarClient::getInitialResultSet(const QStringList &terms) {
 }
 
 QList<QVariantMap> BazaarClient::getResultMetas(const QStringList &resultIds) {
-    QList<QVariantMap> metas;
+    ResultMetas metas;
     
     qDebug() << "BazaarClient::getResultMetas: Calling GetResultMetas with" << resultIds.size() << "result IDs";
     
@@ -184,7 +245,7 @@ QList<QVariantMap> BazaarClient::getResultMetas(const QStringList &resultIds) {
     if (metaReply.type() == QDBusMessage::ErrorMessage) {
         m_lastError = metaReply.errorMessage();
         qWarning() << "BazaarClient::getResultMetas: Failed to get result metadata:" << m_lastError;
-        return metas;
+        return {};
     }
     
     qDebug() << "BazaarClient::getResultMetas: GetResultMetas call successful, parsing response...";
@@ -193,69 +254,15 @@ QList<QVariantMap> BazaarClient::getResultMetas(const QStringList &resultIds) {
     if (metaReply.arguments().isEmpty()) {
         m_lastError = "No arguments in GetResultMetas reply"_L1;
         qWarning() << "BazaarClient::getResultMetas:" << m_lastError;
-        return metas;
+        return {};
     }
     
     // Get the first argument which should be aa{sv}
     QVariant metaVariant = metaReply.arguments().at(0);
     qDebug() << "BazaarClient::getResultMetas: Metadata variant type:" << metaVariant.typeName();
     
-    if (metaVariant.canConvert<QDBusArgument>()) {
-        qDebug() << "BazaarClient::getResultMetas: Converting QDBusArgument to metadata list";
-        QDBusArgument metaArg = metaVariant.value<QDBusArgument>();
-        
-        // Handle aa{sv} signature - array of array of dictionaries
-        metaArg.beginArray();
-        while (!metaArg.atEnd()) {
-            qDebug() << "BazaarClient::getResultMetas: Processing outer array element...";
-            
-            // Each outer element is a{sv} - an array of dictionaries
-            // We need to begin the inner array directly on the same argument
-            metaArg.beginArray();
-            while (!metaArg.atEnd()) {
-                qDebug() << "BazaarClient::getResultMetas: Processing inner array element (dictionary)...";
-                QVariantMap meta;
-                
-                // Each inner element is {sv} - a dictionary of string to variant
-                metaArg.beginMap();
-                while (!metaArg.atEnd()) {
-                    metaArg.beginMapEntry();
-                    
-                    // Read the key (string)
-                    QString key;
-                    metaArg >> key;
-                    
-                    // Read the value (variant)
-                    QDBusVariant dbusVariant;
-                    metaArg >> dbusVariant;
-                    QVariant value = dbusVariant.variant();
-                    
-                    metaArg.endMapEntry();
-                    
-                    meta[key] = value;
-                    qDebug() << "BazaarClient::getResultMetas:     Key:" << key << "Value:" << value.toString() << "Type:" << value.typeName();
-                }
-                metaArg.endMap();
-                
-                metas.append(meta);
-                qDebug() << "BazaarClient::getResultMetas:   Added metadata map with" << meta.size() << "keys:" << meta.keys();
-            }
-            metaArg.endArray();
-        }
-        metaArg.endArray();
-    } else {
-        qWarning() << "BazaarClient::getResultMetas: Cannot convert metadata to QDBusArgument, variant type:" << metaVariant.typeName();
-        // Try direct conversion as fallback
-        if (metaVariant.canConvert<QVariantList>()) {
-            QVariantList metaList = metaVariant.toList();
-            qDebug() << "BazaarClient::getResultMetas: Trying direct conversion from QVariantList with" << metaList.size() << "items";
-            for (const QVariant &item : metaList) {
-                if (item.canConvert<QVariantMap>()) {
-                    metas.append(item.toMap());
-                }
-            }
-        }
-    }
-    
-    return metas;
+    QDBusArgument metaArg = metaVariant.value<QDBusArgument>();
+    metaArg >> metas;
+
+    return metas.metas;
 }

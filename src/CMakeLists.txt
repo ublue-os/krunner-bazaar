@@ -31,15 +31,15 @@ target_link_libraries(bazaarrunner
 )
 
 # Standalone CLI test tool
-add_executable(bazaar-test
-    bazaar-test.cpp
+add_executable(bazaar-dbus-tool
+    bazaar-dbus-tool.cpp
 )
 
-target_link_libraries(bazaar-test
+target_link_libraries(bazaar-dbus-tool
     Qt6::Core
     Qt6::DBus
     bazaarclient
 )
 
 # Install the CLI tool
-install(TARGETS bazaar-test DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(TARGETS bazaar-dbus-tool DESTINATION ${CMAKE_INSTALL_BINDIR})

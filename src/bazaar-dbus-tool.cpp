@@ -13,7 +13,7 @@ using namespace Qt::Literals::StringLiterals;
 int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
-    QCoreApplication::setApplicationName("bazaar-test"_L1);
+    QCoreApplication::setApplicationName("bazaar-dbus-tool"_L1);
     QCoreApplication::setApplicationVersion("1.0"_L1);
     //QCoreApplication::setApplicationDisplayName("Bazaar Test CLI"_L1);
     
@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
     
     QCommandLineOption searchOption({"s"_L1, "search"_L1}, "Search for applications"_L1, "query"_L1);
     QCommandLineOption activateOption({"a"_L1, "activate"_L1}, "Activate/launch an application"_L1, "app-id"_L1);
-    QCommandLineOption verboseOption({"v"_L1, "verbose"_L1}, "Enable verbose output"_L1);
+    QCommandLineOption verboseOption({"d"_L1, "verbose"_L1}, "Enable verbose output"_L1);
     
     parser.addOption(searchOption);
     parser.addOption(activateOption);

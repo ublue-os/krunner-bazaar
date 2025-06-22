@@ -56,6 +56,9 @@ install: build
             make install DESTDIR=/workspace/build/prefix
         '
 
+# Debug bazaar-dbus-tool with GDB
+gdb:
+    gdb -ex "run" -ex "bt" --args ./build/bin/bazaar-dbus-tool -s spotify
 
 # Quick rebuild and install for testing
 quick-install: build
