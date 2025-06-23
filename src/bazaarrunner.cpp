@@ -34,38 +34,6 @@ BazaarRunner::BazaarRunner(QObject *parent, const KPluginMetaData &data)
     qDebug() << "BazaarRunner: Constructor completed successfully";
 }
 
-bool BazaarRunner::isInstalled(const QString &appId) {
-    // Check if Flatpak is installed first
-    QProcess flatpakProcess;
-    flatpakProcess.start(QStringLiteral("flatpak"), {QStringLiteral("--version")});
-    if (!flatpakProcess.waitForFinished(3000) || flatpakProcess.exitCode() != 0) {
-        return false;
-    }
-    
-    // Check if the specific app is installed
-    QProcess checkProcess;
-    checkProcess.start(QStringLiteral("flatpak"), {
-        QStringLiteral("info"), 
-        QStringLiteral("--user"), 
-        appId
-    });
-    checkProcess.waitForFinished(3000);
-    
-    if (checkProcess.exitCode() == 0) {
-        return true; // Installed in user repo
-    }
-    
-    // Check system repo
-    checkProcess.start(QStringLiteral("flatpak"), {
-        QStringLiteral("info"), 
-        QStringLiteral("--system"), 
-        appId
-    });
-    checkProcess.waitForFinished(3000);
-    
-    return checkProcess.exitCode() == 0;
-}
-
 void BazaarRunner::match(KRunner::RunnerContext &context)
 {
     const QString term = context.query();
@@ -82,10 +50,6 @@ void BazaarRunner::match(KRunner::RunnerContext &context)
 
     int addedMatches = 0;
     for (const auto &app : results) {
-        if (isInstalled(app.id)) {
-            qDebug() << "BazaarRunner::match: Skipping already installed app:" << app.name;
-            continue;
-        }
 
         KRunner::QueryMatch match(this);
         match.setIconName(app.iconName);

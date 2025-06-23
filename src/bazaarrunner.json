@@ -10,7 +10,7 @@
         "EnabledByDefault": true,
         "Icon": "bazaar",
         "License": "Apache-2.0",
-        "Name": "krunner-bazaar",
+        "Name": "Bazaar",
         "Version": "0.1"
     }
 }
