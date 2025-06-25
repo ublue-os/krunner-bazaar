@@ -1,0 +1,89 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}-builder
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Log in to Container Registry
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Build development container
+      run: |
+        docker build -t localhost/krunner-bazaar:dev -f Containerfile .
+    
+    - name: Build project
+      run: |
+        mkdir -p build
+        docker run --rm \
+          --volume "$(pwd):/workspace" \
+          --workdir /workspace \
+          localhost/krunner-bazaar:dev \
+          bash -c '
+            set -euo pipefail
+            cd build
+            cmake .. \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_INSTALL_PREFIX=/usr
+            make -j$(nproc)
+          '
+    
+    - name: Test RPM build
+      run: |
+        # Create RPM build structure
+        mkdir -p rpmbuild/{SOURCES,SPECS,BUILD,RPMS,SRPMS}
+    
+        # Create source tarball
+        VERSION=test-$(date +%Y%m%d%H%M%S)
+        git archive --format=tar.gz --prefix=krunner-bazaar-${VERSION}/ HEAD > rpmbuild/SOURCES/krunner-bazaar-${VERSION}.tar.gz
+    
+        # Copy spec file
+        cp krunner-bazaar.spec rpmbuild/SPECS/
+    
+        # Test RPM build
+        docker run --rm \
+          --volume "$(pwd):/workspace" \
+          --workdir /workspace \
+          localhost/krunner-bazaar:dev \
+          bash -c "
+            set -euo pipefail
+            rpmbuild --define '_topdir /workspace/rpmbuild' \
+                     --define 'version ${VERSION}' \
+                     -ba rpmbuild/SPECS/krunner-bazaar.spec
+          "
+    
+        echo "RPM build test successful!"
+        find rpmbuild/RPMS -name "*.rpm" -type f
+        find rpmbuild/SRPMS -name "*.rpm" -type f
+    
+    - name: Upload build artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifacts
+        path: |
+          build/
+          rpmbuild/RPMS/
+          rpmbuild/SRPMS/
+        retention-days: 7

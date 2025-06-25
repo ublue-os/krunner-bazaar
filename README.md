@@ -2,7 +2,21 @@
 
 A KRunner plugin for searching and installing Flatpak applications through the [Bazaar](https://github.com/kolunmi/bazaar) store.
 
-## Building
+## Installation
+
+### From RPM (Fedora/RHEL/CentOS)
+
+Download the latest RPM from the [releases page](https://github.com/ublue-os/krunner-bazaar/releases):
+
+```bash
+# Install the main plugin
+sudo dnf install krunner-bazaar-*.rpm
+
+# Optional: Install CLI debugging tools
+sudo dnf install krunner-bazaar-tools-*.rpm
+```
+
+### From Source
 
 Requires Podman. Tested on [Aurora](https://getaurora.dev).
 
@@ -10,6 +24,36 @@ Requires Podman. Tested on [Aurora](https://getaurora.dev).
 just build
 just install
 ```
+
+### Building RPM Locally
+
+```bash
+# Build RPM package
+just rpm
+
+```
+
+## Development
+
+### Release Process
+
+1. Create and push a version tag:
+   ```bash
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
+
+2. GitHub Actions will automatically:
+   - Build the RPM packages
+   - Create a GitHub release
+   - Upload RPM artifacts with checksums
+
+### Requirements
+
+- KDE Frameworks 6
+- Qt 6.5+
+- Flatpak
+- Bazaar
 
 ## Implementation Details
 
