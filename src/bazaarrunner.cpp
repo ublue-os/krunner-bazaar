@@ -53,7 +53,7 @@ void BazaarRunner::match(KRunner::RunnerContext &context)
 
         KRunner::QueryMatch match(this);
         match.setIconName(app.iconName);
-        match.setText(i18n("Install %1 via Bazaar", app.name));
+        match.setText(i18n("Install %1", app.name));
         match.setSubtext(app.description);
         match.setData(app.id);
         match.setRelevance(0.9);

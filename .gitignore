@@ -1,0 +1,4 @@
+vendor/
+build
+rpmbuild/
+.local/state/dnf5.log

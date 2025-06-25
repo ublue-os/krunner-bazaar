@@ -12,6 +12,9 @@ RUN dnf5 update -y && \
         make \
         gcc \
         gcc-c++ \
+        # RPM build tools
+        rpm-build \
+        rpmdevtools \
         # KDE Frameworks 6 development packages
         extra-cmake-modules \
         kf6-krunner-devel \
