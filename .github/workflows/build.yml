@@ -16,11 +16,11 @@ jobs:
     permissions:
       contents: read
       packages: write
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
+
     - name: Log in to Container Registry
       if: github.event_name != 'pull_request'
       uses: docker/login-action@v3
@@ -28,11 +28,11 @@ jobs:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-    
+
     - name: Build development container
       run: |
         docker build -t localhost/krunner-bazaar:dev -f Containerfile .
-    
+
     - name: Build project
       run: |
         mkdir -p build
@@ -48,14 +48,14 @@ jobs:
               -DCMAKE_INSTALL_PREFIX=/usr
             make -j$(nproc)
           '
-    
+
     - name: Test RPM build
       run: |
         # Create RPM build structure
         mkdir -p rpmbuild/{SOURCES,SPECS,BUILD,RPMS,SRPMS}
     
-        # Create source tarball
-        VERSION=test-$(date +%Y%m%d%H%M%S)
+        # Create source tarball with valid RPM version (no hyphens)
+        VERSION=0.0.$(date +%Y%m%d%H%M%S)
         git archive --format=tar.gz --prefix=krunner-bazaar-${VERSION}/ HEAD > rpmbuild/SOURCES/krunner-bazaar-${VERSION}.tar.gz
     
         # Copy spec file

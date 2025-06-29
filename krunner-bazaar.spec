@@ -1,5 +1,5 @@
 Name:           krunner-bazaar
-Version:        1.0.0
+Version:        %{?version}%{!?version:1.0.0}
 Release:        1%{?dist}
 Summary:        KDE KRunner plugin for searching Flatpak applications via Bazaar
 
@@ -14,6 +14,7 @@ BuildRequires:  kf6-krunner-devel
 BuildRequires:  kf6-ki18n-devel
 BuildRequires:  kf6-kcoreaddons-devel
 BuildRequires:  qt6-qtbase-devel
+BuildRequires:  kf6-rpm-macros
 
 Requires:       kf6-krunner
 Requires:       qt6-qtbase
@@ -35,7 +36,7 @@ Command-line tools for testing and debugging the krunner-bazaar plugin,
 including a standalone tool for testing Bazaar D-Bus interactions.
 
 %prep
-%autosetup
+%autosetup -n %{name}-%{version}
 
 %build
 %cmake \
@@ -48,12 +49,12 @@ including a standalone tool for testing Bazaar D-Bus interactions.
 
 %check
 # Basic smoke test - check if the plugin file was created
-test -f %{buildroot}%{_libdir}/qt6/plugins/kf6/krunner/bazaarrunner.so
+test -f %{buildroot}%{_kf6_plugindir}/krunner/bazaarrunner.so
 
 %files
 %license LICENSE
 %doc README.md
-%{_libdir}/qt6/plugins/kf6/krunner/bazaarrunner.so
+%{_kf6_plugindir}/krunner/bazaarrunner.so
 
 %files tools
 %{_bindir}/bazaar-dbus-tool
