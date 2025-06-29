@@ -54,8 +54,8 @@ jobs:
         # Create RPM build structure
         mkdir -p rpmbuild/{SOURCES,SPECS,BUILD,RPMS,SRPMS}
     
-        # Create source tarball
-        VERSION=test-$(date +%Y%m%d%H%M%S)
+        # Create source tarball with valid RPM version (no hyphens)
+        VERSION=0.0.$(date +%Y%m%d%H%M%S)
         git archive --format=tar.gz --prefix=krunner-bazaar-${VERSION}/ HEAD > rpmbuild/SOURCES/krunner-bazaar-${VERSION}.tar.gz
     
         # Copy spec file
