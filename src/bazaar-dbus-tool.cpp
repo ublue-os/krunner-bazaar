@@ -9,13 +9,11 @@
 
 using namespace Qt::Literals::StringLiterals;
 
-
 int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
     QCoreApplication::setApplicationName("bazaar-dbus-tool"_L1);
     QCoreApplication::setApplicationVersion("1.0"_L1);
-    //QCoreApplication::setApplicationDisplayName("Bazaar Test CLI"_L1);
     
     QCommandLineParser parser;
     parser.setApplicationDescription("Test tool for debugging Bazaar D-Bus interaction"_L1);

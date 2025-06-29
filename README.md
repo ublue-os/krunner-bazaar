@@ -4,16 +4,11 @@ A KRunner plugin for searching and installing Flatpak applications through the [
 
 ## Installation
 
-### From RPM (Fedora/RHEL/CentOS)
-
-Download the latest RPM from the [releases page](https://github.com/ublue-os/krunner-bazaar/releases):
+### Fedora (copr)
 
 ```bash
-# Install the main plugin
-sudo dnf install krunner-bazaar-*.rpm
-
-# Optional: Install CLI debugging tools
-sudo dnf install krunner-bazaar-tools-*.rpm
+sudo dnf5 copr enable copr.fedorainfracloud.org/ublue-os/packages
+sudo dnf5 install krunner-bazaar
 ```
 
 ### From Source
@@ -47,13 +42,6 @@ just rpm
    - Build the RPM packages
    - Create a GitHub release
    - Upload RPM artifacts with checksums
-
-### Requirements
-
-- KDE Frameworks 6
-- Qt 6.5+
-- Flatpak
-- Bazaar
 
 ## Implementation Details
 
