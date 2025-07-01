@@ -6,9 +6,9 @@
                 "Name": "Adam Fidel"
             }
         ],
-        "Description": "Bazaar runner",
+        "Description": "Search for applications on Flathub in Bazaar",
         "EnabledByDefault": true,
-        "Icon": "bazaar",
+        "Icon": "io.github.kolunmi.bazaar",
         "License": "Apache-2.0",
         "Name": "Bazaar",
         "Version": "1.0.1"
