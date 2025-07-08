@@ -89,7 +89,7 @@ void BazaarRunner::run(const KRunner::RunnerContext &context, const KRunner::Que
         // Use the flatpak run command if Bazaar is installed as Flatpak
         if (!QProcess::startDetached(QStringLiteral("flatpak"), 
                                    QStringList() << QStringLiteral("run") 
-                                                << QStringLiteral("io.github.kolunmi.bazaar"))) {
+                                                << QStringLiteral("io.github.kolunmi.Bazaar"))) {
             // Final fallback: try system bazaar command
             QProcess::startDetached(QStringLiteral("bazaar"), QStringList());
         }
