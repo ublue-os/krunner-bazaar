@@ -76,9 +76,9 @@ BazaarClient::BazaarClient() {
     
     // Initialize D-Bus interface to Bazaar
     // Based on Bazaar's search provider configuration:
-    // BusName=io.github.kolunmi.bazaar
+    // BusName=io.github.kolunmi.Bazaar
     // ObjectPath=/io/github/kolunmi/bazaar/SearchProvider
-    QString serviceName = QStringLiteral("io.github.kolunmi.bazaar");
+    QString serviceName = QStringLiteral("io.github.kolunmi.Bazaar");
     
     qDebug() << "BazaarClient: Attempting to connect to D-Bus service:" << serviceName;
     
