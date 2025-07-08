@@ -10,6 +10,10 @@
 
 using namespace Qt::Literals::StringLiterals;
 
+QString kDBusServiceName = QStringLiteral("io.github.kolunmi.Bazaar");
+QString kDBusServicePath = QStringLiteral("/io/github/kolunmi/Bazaar/SearchProvider");
+QString kDBusServiceInterface = QStringLiteral("org.gnome.Shell.SearchProvider2");
+
 struct ResultMetas {
     QList<QVariantMap> metas;
 };
@@ -71,30 +75,23 @@ const QDBusArgument& operator>>(const QDBusArgument& arg, ResultMetas& metas)
 }
 
 BazaarClient::BazaarClient() {
-    //qDBusRegisterMetaType<ResultMetas>();
     qDebug() << "BazaarClient: Initializing connection to Bazaar";
-    
-    // Initialize D-Bus interface to Bazaar
-    // Based on Bazaar's search provider configuration:
-    // BusName=io.github.kolunmi.Bazaar
-    // ObjectPath=/io/github/kolunmi/bazaar/SearchProvider
-    QString serviceName = QStringLiteral("io.github.kolunmi.Bazaar");
-    
-    qDebug() << "BazaarClient: Attempting to connect to D-Bus service:" << serviceName;
-    
+
+    qDebug() << "BazaarClient: Attempting to connect to D-Bus service:" << kDBusServiceName;
+
     m_bazaarInterface = std::make_unique<QDBusInterface>(
-        serviceName,
-        QStringLiteral("/io/github/kolunmi/bazaar/SearchProvider"),
-        QStringLiteral("org.gnome.Shell.SearchProvider2"),
+        kDBusServiceName,
+        kDBusServicePath,
+        kDBusServiceInterface,
         QDBusConnection::sessionBus()
     );
-    
+
     if (!m_bazaarInterface->isValid()) {
         m_lastError = m_bazaarInterface->lastError().message();
         qWarning() << "BazaarClient: Failed to connect to Bazaar D-Bus interface:" << m_lastError;
         qWarning() << "BazaarClient: Make sure Bazaar is running and the search provider is enabled.";
     } else {
-        qDebug() << "BazaarClient: Successfully connected to Bazaar D-Bus service:" << serviceName;
+        qDebug() << "BazaarClient: Successfully connected to Bazaar D-Bus service";
         m_lastError.clear();
     }
 }
@@ -233,9 +230,9 @@ QList<QVariantMap> BazaarClient::getResultMetas(const QStringList &resultIds) {
     qDebug() << "BazaarClient::getResultMetas: Calling GetResultMetas with" << resultIds.size() << "result IDs";
     
     QDBusMessage metaCall = QDBusMessage::createMethodCall(
-        QStringLiteral("io.github.kolunmi.bazaar"),
-        QStringLiteral("/io/github/kolunmi/bazaar/SearchProvider"),
-        QStringLiteral("org.gnome.Shell.SearchProvider2"),
+        kDBusServiceName,
+        kDBusServicePath,
+        kDBusServiceInterface,
         QStringLiteral("GetResultMetas")
     );
     metaCall << resultIds;
