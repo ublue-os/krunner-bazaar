@@ -8,7 +8,7 @@
         ],
         "Description": "Search for applications on Flathub in Bazaar",
         "EnabledByDefault": true,
-        "Icon": "io.github.kolunmi.bazaar",
+        "Icon": "io.github.kolunmi.Bazaar",
         "License": "Apache-2.0",
         "Name": "Bazaar",
         "Version": "1.0.1"
