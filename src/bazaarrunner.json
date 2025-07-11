@@ -11,6 +11,7 @@
         "Icon": "io.github.kolunmi.Bazaar",
         "License": "Apache-2.0",
         "Name": "Bazaar",
-        "Version": "1.0.1"
+        "Version": "1.0.4",
+        "Website": "https://github.com/ublue-os/krunner-bazaar"
     }
 }

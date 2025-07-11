@@ -89,3 +89,50 @@ rpm: build-container
     echo "Built packages:"
     find rpmbuild/RPMS -name "*.rpm" -type f
     find rpmbuild/SRPMS -name "*.rpm" -type f
+
+bump-version version:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    
+    VERSION="{{version}}"
+    
+    # Validate version format (should be like 1.2.3)
+    if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+        echo "Error: Version must be in format X.Y.Z (e.g., 1.2.3)"
+        exit 1
+    fi
+    
+    echo "Bumping version to $VERSION..."
+    
+    # Check if working directory is clean
+    if ! git diff --quiet || ! git diff --cached --quiet; then
+        echo "Error: Working directory is not clean. Please commit or stash changes first."
+        git status --porcelain
+        exit 1
+    fi
+    
+    # Update version in bazaarrunner.json
+    echo "Updating version in src/bazaarrunner.json..."
+    sed -i "s/\"Version\": \"[^\"]*\"/\"Version\": \"$VERSION\"/" src/bazaarrunner.json
+    
+    # Verify the change was made
+    if ! grep -q "\"Version\": \"$VERSION\"" src/bazaarrunner.json; then
+        echo "Error: Failed to update version in bazaarrunner.json"
+        exit 1
+    fi
+    
+    echo "Version updated successfully in bazaarrunner.json"
+    
+    # Show the diff
+    git diff src/bazaarrunner.json
+    
+    # Stage the change
+    git add src/bazaarrunner.json
+    
+    echo "Creating commit..."
+    git commit -m "chore: bump version to v$VERSION"
+    git push origin HEAD
+
+    git tag "v$VERSION"
+    git push origin "v$VERSION"
+    
