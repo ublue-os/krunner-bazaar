@@ -34,8 +34,7 @@ just rpm
 
 1. Create and push a version tag:
    ```bash
-   git tag v1.0.0
-   git push origin v1.0.0
+   just bump-version 1.x.x
    ```
 
 2. GitHub Actions will automatically:

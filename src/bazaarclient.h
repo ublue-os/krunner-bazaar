@@ -4,6 +4,7 @@
 #include <QStringList>
 #include <QVariantMap>
 #include <QDBusInterface>
+#include <functional>
 #include <memory>
 
 struct AppSuggestion {
@@ -19,7 +20,8 @@ public:
 
     bool isConnected() const;
     QString lastError() const;
-    QList<AppSuggestion> search(const QString &term);
+
+    QList<AppSuggestion> search(const QString &term, const std::function<bool()> &isContextValid = nullptr);
     bool activateResult(const QString &appId, const QStringList &searchTerms);
 
 private:

@@ -36,14 +36,18 @@ void BazaarRunner::match(KRunner::RunnerContext &context)
     const QString term = context.query();
 
     if (term.length() < 2) {
-        qDebug() << "BazaarRunner::match: Query too short, minimum 2 characters required";
         return;
     }
 
-    QList<AppSuggestion> results = m_bazaarClient.search(term);
+    QList<AppSuggestion> results = m_bazaarClient.search(term, [&context](){
+        return context.isValid();
+    });
 
     int addedMatches = 0;
     for (const auto &app : results) {
+        if (!context.isValid()) {
+            break;
+        }
 
         KRunner::QueryMatch match(this);
         match.setIconName(app.iconName);
