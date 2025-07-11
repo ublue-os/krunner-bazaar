@@ -87,7 +87,7 @@ QString BazaarClient::lastError() const {
     return m_lastError;
 }
 
-QList<AppSuggestion> BazaarClient::search(const QString &term, std::function<bool()> isContextValid) {
+QList<AppSuggestion> BazaarClient::search(const QString &term, const std::function<bool()> &isContextValid) {
     QList<AppSuggestion> results;
     
     if (!isConnected()) {
