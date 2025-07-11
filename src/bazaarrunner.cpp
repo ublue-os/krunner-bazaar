@@ -50,11 +50,15 @@ void BazaarRunner::match(KRunner::RunnerContext &context)
         match.setText(i18n("Install %1", app.name));
         match.setSubtext(app.description);
         match.setData(app.id);
-        match.setRelevance(0.9);
+
+        // Preserve Bazaar's ordering
+        const double relevance = 1.0 - (addedMatches * 0.01);
+        match.setRelevance(qMax(relevance, 0.1));
+
         context.addMatch(match);
         addedMatches++;
-    
-        qDebug() << "BazaarRunner::match: Added match for:" << app.name;
+
+        qDebug() << "BazaarRunner::match: Added match for:" << app.name << "with relevance:" << relevance;
     }
 }
 
