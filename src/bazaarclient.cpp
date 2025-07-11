@@ -87,7 +87,7 @@ QString BazaarClient::lastError() const {
     return m_lastError;
 }
 
-QList<AppSuggestion> BazaarClient::search(const QString &term) {
+QList<AppSuggestion> BazaarClient::search(const QString &term, std::function<bool()> isContextValid) {
     QList<AppSuggestion> results;
     
     if (!isConnected()) {
@@ -100,14 +100,22 @@ QList<AppSuggestion> BazaarClient::search(const QString &term) {
         m_lastError = "Search term too short (minimum 2 characters)"_L1;
         return results;
     }
-    
+
     // Split search term into individual terms
     QStringList terms = term.split(QLatin1Char(' '), Qt::SkipEmptyParts);
- 
+
+    if (isContextValid && !isContextValid()) {
+        return results;
+    }
+
     // Get initial result set
     QStringList resultIds = getInitialResultSet(terms);
     if (resultIds.isEmpty()) {
         qDebug() << "BazaarClient::search: No results returned from Bazaar for query:" << term;
+        return results;
+    }
+
+    if (isContextValid && !isContextValid()) {
         return results;
     }
 
@@ -117,12 +125,14 @@ QList<AppSuggestion> BazaarClient::search(const QString &term) {
 
     // Extract metadata for each result
     for (int i = 0; i < resultIds.size() && i < metas.size(); ++i) {
+        if (isContextValid && !isContextValid()) {
+            break;
+        }
+
         const QVariantMap &meta = metas[i];
-    
+
         AppSuggestion suggestion;
         suggestion.id = resultIds[i];
-        
-
         suggestion.name = meta.value(QStringLiteral("name")).toString();
         suggestion.description = meta.value(QStringLiteral("description")).toString();
         
