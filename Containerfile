@@ -1,5 +1,4 @@
-# Containerfile for krunner-bazaar development environment
-FROM fedora:43@sha256:ef3f778641a15ea30551806395ca87217379a0040a20e08e1ceb989958e0db27
+FROM fedora:42
 
 LABEL description="Development environment for krunner-bazaar KDE plugin"
 LABEL maintainer="Adam Fidel <adam@fidel.cloud>"
