@@ -10,6 +10,9 @@
 
 using namespace Qt::Literals::StringLiterals;
 
+// TODO: make this configurable in a KCM
+static constexpr int kMaxNumResults = 6;
+
 QString kDBusServiceName = QStringLiteral("io.github.kolunmi.Bazaar");
 QString kDBusServicePath = QStringLiteral("/io/github/kolunmi/Bazaar/SearchProvider");
 QString kDBusServiceInterface = QStringLiteral("org.gnome.Shell.SearchProvider2");
@@ -119,7 +122,11 @@ QList<AppSuggestion> BazaarClient::search(const QString &term, const std::functi
         return results;
     }
 
-    qDebug() << "BazaarClient::search: Bazaar returned" << resultIds.size() << "result IDs:" << resultIds;
+    qDebug() << "BazaarClient::search: Bazaar returned" << resultIds.size() << "result IDs (will be truncated to " << kMaxNumResults << ")";
+
+    if (resultIds.size() > kMaxNumResults) {
+        resultIds = resultIds.mid(0, kMaxNumResults);
+    }
 
     QList<QVariantMap> metas = getResultMetas(resultIds);
 
