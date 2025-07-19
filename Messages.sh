@@ -1,2 +1,3 @@
 #! /usr/bin/env bash
-$XGETTEXT src/*.cpp -o $podir/plasma_runner_org.kde.bazaarrunner.pot
+# Extract translatable strings from the KRunner plugin
+$XGETTEXT src/*.cpp -o $podir/plasma_runner_bazaarrunner.pot

@@ -1,4 +1,4 @@
-add_definitions(-DTRANSLATION_DOMAIN=\"plasma_runner_org.kde.bazaarrunner\")
+add_definitions(-DTRANSLATION_DOMAIN=\"plasma_runner_bazaarrunner\")
 
 # Shared Bazaar client library
 add_library(bazaarclient STATIC

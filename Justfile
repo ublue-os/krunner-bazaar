@@ -9,16 +9,16 @@ build-container:
 build: build-container
     #!/usr/bin/env bash
     set -euo pipefail
-    
+
     echo "Building krunner-bazaar..."
-    
+
     # Create build directory if it doesn't exist
     mkdir -p build
-    
+
     # Build using development container
     podman run --rm \
         --userns=keep-id \
-        --volume "$(pwd):/workspace" \
+        --volume "$(pwd):/workspace:Z" \
         --workdir /workspace \
         {{image_name}} \
         bash -c '
@@ -28,7 +28,7 @@ build: build-container
             cmake .. \
                 -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE:-Release} \
                 -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX:-/usr}
-            
+
             make -j$(nproc)
         '
 
@@ -39,17 +39,19 @@ install: build
     # Install using the development container with host system access
     podman run --rm \
         --userns=keep-id \
-        --volume "$(pwd):/workspace" \
+        --volume "$(pwd):/workspace:Z" \
         --workdir /workspace/build \
         {{image_name}} \
         bash -c '
             # Install to host system
-            echo "Installing to host system..."
             mkdir -p /workspace/build/prefix
             make install DESTDIR=/workspace/build/prefix
         '
-    
-    sudo cp build/prefix/usr/lib64/qt6/plugins/kf6/krunner/bazaarrunner.so /usr/lib64/qt6/plugins/kf6/krunner/bazaarrunner.so
+    tree build/prefix
+    sudo ostree admin unlock || true
+    sudo cp -v ./build/prefix/usr/lib64/qt6/plugins/kf6/krunner/bazaarrunner.so /usr/lib64/qt6/plugins/kf6/krunner/bazaarrunner.so
+    sudo cp -v ./build/prefix/usr/share/locale/es/LC_MESSAGES/plasma_runner_bazaarrunner.mo /usr/share/locale/es/LC_MESSAGES/plasma_runner_bazaarrunner.mo
+
 
 gdb:
     gdb -ex "run" -ex "bt" --args ./build/bin/bazaar-dbus-tool -s spotify

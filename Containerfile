@@ -23,6 +23,8 @@ RUN dnf5 update -y && \
         # Qt6 development packages
         qt6-qtbase-devel \
         dbus-tools \
+        # Translation tools
+        gettext \
         # Development utilities
         sudo \
         vim \
