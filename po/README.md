@@ -17,8 +17,8 @@ The plugin currently has the following user-visible strings:
 
 ```
 po/
-├── plasma_runner_bazaarrunner.pot          # Template file (don't edit directly)
-├── es/plasma_runner_bazaarrunner.po                                   # Spanish translation (reference example)
+├── plasma_runner_bazaarrunner.pot        # Template file (don't edit directly)
+├── es/plasma_runner_bazaarrunner.po      # Spanish translation (reference example)
 ```
 
 ## Contributing a New Translation
@@ -92,7 +92,7 @@ This will update the `.pot` file with any new strings.
 When the `.pot` file is updated, you can update your language file using:
 
 ```bash
-msgmerge --update po/[LANG_CODE].po po/plasma_runner_org.kde.bazaarrunner.pot
+msgmerge --update po/[LANG_CODE].po po/plasma_runner_bazaarrunner.pot
 ```
 
 This will add new strings and mark changed strings as "fuzzy" for review.
