@@ -1,0 +1,29 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the krunner-bazaar package.
+# Jill Fiore <contact@lumaeris.com>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: krunner-bazaar\n"
+"Report-Msgid-Bugs-To: https://github.com/ublue-os/krunner-bazaar/issues\n"
+"POT-Creation-Date: 2025-07-19 12:00+0000\n"
+"PO-Revision-Date: 2025-07-19 20:34+0300\n"
+"Last-Translator: Jill Fiore <contact@lumaeris.com>\n"
+"Language-Team: Russian <ru@li.org>\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Generator: Gtranslator 48.0\n"
+
+#: src/bazaarrunner.cpp:28
+msgid "Search for Flatpak applications in Bazaar"
+msgstr "Поиск приложений Flatpak в Bazaar"
+
+#: src/bazaarrunner.cpp:50
+#, kde-format
+msgid "Install %1"
+msgstr "Установить %1"
