@@ -30,6 +30,10 @@ just rpm
 
 ## Development
 
+### Internationalization
+
+The plugin supports multiple languages. To contribute translations. See `po/README.md` for detailed translation instructions.
+
 ### Release Process
 
 1. Create and push a version tag:

@@ -6,7 +6,7 @@
                 "Name": "Adam Fidel"
             }
         ],
-        "Description": "Search for applications on Flathub in Bazaar",
+        "Description": "Search for Flatpak applications in Bazaar",
         "EnabledByDefault": true,
         "Icon": "io.github.kolunmi.Bazaar",
         "License": "Apache-2.0",
