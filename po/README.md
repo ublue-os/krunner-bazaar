@@ -85,14 +85,4 @@ If new translatable strings are added to the code, run:
 ./Messages.sh
 ```
 
-This will update the `.pot` file with any new strings.
-
-### Update existing translations
-
-When the `.pot` file is updated, you can update your language file using:
-
-```bash
-msgmerge --update po/[LANG_CODE].po po/plasma_runner_bazaarrunner.pot
-```
-
-This will add new strings and mark changed strings as "fuzzy" for review.
+This will update the `.pot` file with any new strings. This will also update existing language files by adding new strings and marking changed strings as "fuzzy" for review.
