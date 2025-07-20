@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: krunner-bazaar\n"
 "Report-Msgid-Bugs-To: https://github.com/ublue-os/krunner-bazaar/issues\n"
-"POT-Creation-Date: 2025-07-19 12:00+0000\n"
+"POT-Creation-Date: 2025-07-20 06:02+0000\n"
 "PO-Revision-Date: 2025-07-19 20:34+0300\n"
 "Last-Translator: Jill Fiore <contact@lumaeris.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -19,11 +19,12 @@ msgstr ""
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Gtranslator 48.0\n"
 
-#: src/bazaarrunner.cpp:28
+#: src/bazaarrunner.cpp:30
+#, kde-format
 msgid "Search for Flatpak applications in Bazaar"
 msgstr "Поиск приложений Flatpak в Bazaar"
 
-#: src/bazaarrunner.cpp:50
+#: src/bazaarrunner.cpp:54
 #, kde-format
 msgid "Install %1"
 msgstr "Установить %1"

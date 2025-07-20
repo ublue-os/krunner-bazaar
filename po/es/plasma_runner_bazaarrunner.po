@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: krunner-bazaar\n"
 "Report-Msgid-Bugs-To: https://github.com/ublue-os/krunner-bazaar/issues\n"
-"POT-Creation-Date: 2025-07-19 12:00+0000\n"
+"POT-Creation-Date: 2025-07-20 06:02+0000\n"
 "PO-Revision-Date: 2025-07-19 12:00+0000\n"
 "Last-Translator: Adam Fidel <adam@fidel.cloud>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -11,11 +11,12 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/bazaarrunner.cpp:28
+#: src/bazaarrunner.cpp:30
+#, kde-format
 msgid "Search for Flatpak applications in Bazaar"
 msgstr "Buscar aplicaciones Flatpak en Bazaar"
 
-#: src/bazaarrunner.cpp:50
+#: src/bazaarrunner.cpp:54
 #, kde-format
 msgid "Install %1"
 msgstr "Instalar %1"
