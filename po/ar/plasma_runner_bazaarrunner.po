@@ -1,0 +1,30 @@
+# bazaarrunner translations.
+# Copyright (C) 2025 bazaarrunner contributors
+# This file is distributed under the same license as the bazaarrunner package.
+#
+# SPDX-FileCopyrightText: 2025 jj <jj>
+msgid ""
+msgstr ""
+"Project-Id-Version: bazaarrunner \n"
+"Report-Msgid-Bugs-To: https://github.com/ublue-os/krunner-bazaar/issues \n"
+"POT-Creation-Date: 2025-07-20 06:02+0000\n"
+"PO-Revision-Date: 2025-08-12 11:22+0200\n"
+"Last-Translator: jj <jj>\n"
+"Language-Team: Arabic <kde-i18n-doc@kde.org>\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && "
+"n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
+"X-Generator: Lokalize 25.04.0\n"
+
+#: src/bazaarrunner.cpp:30
+#, kde-format
+msgid "Search for Flatpak applications in Bazaar"
+msgstr "ابحث عن تطبيقات فلاتباك في بازار"
+
+#: src/bazaarrunner.cpp:54
+#, kde-format
+msgid "Install %1"
+msgstr "ثبِّت %1"
