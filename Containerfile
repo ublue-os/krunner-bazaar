@@ -1,4 +1,4 @@
-FROM fedora:42
+FROM fedora:42@sha256:aa7befe5cfd1f0e062728c16453cd1c479d4134c7b85eac00172f3025ab0d522
 
 LABEL description="Development environment for krunner-bazaar KDE plugin"
 LABEL maintainer="Adam Fidel <adam@fidel.cloud>"
